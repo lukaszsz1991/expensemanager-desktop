@@ -1,0 +1,15 @@
+# Środowisko wirtualne
+venv/
+ENV/
+
+# PyCharm / IDE
+.idea/
+.vscode/
+*.swp
+
+# Pliki tymczasowe Pythona
+__pycache__/
+*.py[cod]
+
+# Systemowe
+.DS_Store
