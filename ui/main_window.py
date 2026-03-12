@@ -23,5 +23,5 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(container)
 
     def on_button_click(self):
-        self.label.setText("Łączenie z API kolegów...")
+        self.label.setText("Łączenie z API...")
         print("Tu w przyszłości wywołamy funkcję z folderu api/")
