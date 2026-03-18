@@ -1,27 +1,17 @@
-from PyQt6.QtWidgets import QMainWindow, QPushButton, QVBoxLayout, QWidget, QLabel
+# ui/main_window.py
+from PyQt6.QtWidgets import QMainWindow, QLabel, QVBoxLayout, QWidget
+
 
 class MainWindow(QMainWindow):
-    def __init__(self):
+    def __init__(self, api_client):
         super().__init__()
-
-        self.setWindowTitle("Expanse Manager Desktop")
+        self.api = api_client
+        self.setWindowTitle("ExpenseSplitter - Panel Główny")
         self.resize(800, 600)
 
-        # Główny układ (Layout)
+        central_widget = QWidget()
         layout = QVBoxLayout()
+        layout.addWidget(QLabel("Zalogowano pomyślnie! Tu będą Twoje wydatki."))
 
-        self.label = QLabel("Witaj w aplikacji do wydatków!")
-        layout.addWidget(self.label)
-
-        self.btn = QPushButton("Pobierz moje wydatki")
-        self.btn.clicked.connect(self.on_button_click)
-        layout.addWidget(self.btn)
-
-        # Ustawienie głównego kontenera
-        container = QWidget()
-        container.setLayout(layout)
-        self.setCentralWidget(container)
-
-    def on_button_click(self):
-        self.label.setText("Łączenie z API...")
-        print("Tu w przyszłości wywołamy funkcję z folderu api/")
+        central_widget.setLayout(layout)
+        self.setCentralWidget(central_widget)

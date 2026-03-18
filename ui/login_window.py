@@ -1,5 +1,5 @@
 from PyQt6.QtGui import QPixmap
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLineEdit, QHBoxLayout, QPushButton, QLabel
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLineEdit, QHBoxLayout, QPushButton, QLabel, QMessageBox
 from PyQt6.QtCore import pyqtSignal as Signal, Qt
 
 
@@ -13,28 +13,42 @@ class LoginWindow(QWidget):
 
         layout = QVBoxLayout()
 
+        # Dodanie logo
         self.logo_label = QLabel()
         pixmap = QPixmap("ui/logo.png")
         self.logo_label.setPixmap(pixmap.scaled(150, 150))
         self.logo_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(self.logo_label)
 
-
+        # Dodanie pola loginu i hasła
         self.username_input = QLineEdit()
         self.username_input.setPlaceholderText("Login (wpisz: admin)")
         layout.addWidget(self.username_input)
-
         self.password_input = QLineEdit()
         self.password_input.setPlaceholderText("Hasło: (wpisz: nnn)")
         self.password_input.setEchoMode(QLineEdit.EchoMode.Password)
         layout.addWidget(self.password_input)
 
+        # Obsługa przycisku "Zaloguj"
         buttons_layout = QHBoxLayout()
         button_password_forgotten = QPushButton("Zapomniałem hasła")
         buttons_layout.addWidget(button_password_forgotten)
-        button_submit = QPushButton("Zaloguj")
-        buttons_layout.addWidget(button_submit)
+        self.button_submit = QPushButton("Zaloguj")
+        self.button_submit.clicked.connect(self.handle_login)
+        buttons_layout.addWidget(self.button_submit)
         layout.addLayout(buttons_layout)
 
         self.setLayout(layout)
         self.resize(300, 500)
+
+    # Metoda obsługująca przycisk "Zaloguj"
+    def handle_login(self):
+        username = self.username_input.text()
+        password = self.password_input.text()
+
+        # Wywołanie API
+        if self.api.login(username, password):
+            self.login_successful.emit()
+        else:
+            QMessageBox.warning(self, "Błąd", "Nieprawidłowy login lub/i hasło!")
+            self.password_input.clear()

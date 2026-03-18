@@ -5,27 +5,30 @@ from api.client import APIClient
 from ui.main_window import MainWindow
 from ui.login_window import LoginWindow
 
+class ExpenseSplitterApp:
+    def __init__(self):
+        self.app = QApplication(sys.argv)
 
-def main():
-    app = QApplication(sys.argv)
+        # Inicjalizacja API
+        self.api_client = APIClient(base_url="http://localhost:8080/api")
 
-    # Obiekt API
-    client = APIClient(base_url="http://localhost:8000")
+        # Tworzenie okien
+        self.login_window = LoginWindow(self.api_client)
+        self.main = None # Tworzone dopiero po zalogowaniu
 
-    # Instancje: okno logowania i główne
-    login_win = LoginWindow("api_client")
-    main_win = MainWindow()
+        # Przełączenie okiem po zalogowaniu
+        self.login_window.login_successful.connect(self.start_main_app)
 
-    # Przełączenie okna
-    def login_successful():
-        login_win.hide()
-        main_win.show()
+    def run(self):
+        self.login_window.show()
+        return self.app.exec()
 
-    login_win.login_successful.connect(login_successful)
-
-    # Startujemy od okna logowania + uruchomienie pętli zdarzeń
-    login_win.show()
-    sys.exit(app.exec())
+    def start_main_app(self):
+        self.main_window = MainWindow(self.api_client)
+        self.main_window.show()
+        self.login_window.close()
 
 if __name__ == "__main__":
-    main()
+    # Tworzymy instancję zarządcy i odpalamy
+    expense_splitter = ExpenseSplitterApp()
+    sys.exit(expense_splitter.run())
