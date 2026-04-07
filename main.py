@@ -15,19 +15,21 @@ class ExpenseSplitterApp:
 
         # Tworzenie okien
         self.login_window = LoginWindow(self.api_client)
-        self.main = None  # Tworzone dopiero po zalogowaniu
+        self.main_window = MainWindow(self.api_client)
 
         # Przełączenie okiem po zalogowaniu
         self.login_window.login_successful.connect(self.start_main_app)
 
     def run(self):
         self.login_window.show()
+        self.main_window.show()
+        self.main_window.setEnabled(False)
         return self.app.exec()
 
     def start_main_app(self):
-        self.main_window = MainWindow(self.api_client)
-        self.main_window.show()
         self.login_window.close()
+        self.main_window.setEnabled(True)
+        self.main_window.load_data()
 
 
 if __name__ == "__main__":

@@ -53,20 +53,24 @@ class APIClient:
             response = self.session.get(url, timeout=5)
             response.raise_for_status()
             data = response.json()
+            print("RESPONSE DATA:", data)
+            expenses_list = data.get("content", [])
+
             expenses = []
 
-            for item in data:
+            for item in expenses_list:
                 expense = Expense(
                     id=item["id"],
                     title=item["title"],
-                    amount=item["amount"],
-                    payer_id=item["payer_id"],
-                    participants_id=item["participants_id"]
+                    amount_total=item["amountTotal"],
+                    my_balance=item["myBalance"],
+                    expense_date=item["expenseDate"]
                 )
+                print(expense)
 
                 expenses.append(expense)
 
             return expenses
         except requests.exceptions.RequestException as e:
-            print(f"Błąd pobierania wydathów: {e}")
+            print(f"Błąd pobierania wydatków: {e}")
             return []

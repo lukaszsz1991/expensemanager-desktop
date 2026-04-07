@@ -7,5 +7,5 @@ class Expense:
     id: str
     title: str
     amount_total: float
-    payer_id: int
-    participants_id: List[int]
+    my_balance: float
+    expense_date: str

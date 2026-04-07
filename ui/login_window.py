@@ -25,6 +25,7 @@ class LoginWindow(QWidget):
         self.email_input.setPlaceholderText("E-mail (np. john.doe@example.com)")
         layout.addWidget(self.email_input)
         self.password_input = QLineEdit()
+        self.password_input.returnPressed.connect(self.handle_login)
         self.password_input.setPlaceholderText("Hasło:")
         self.password_input.setEchoMode(QLineEdit.EchoMode.Password)
         layout.addWidget(self.password_input)
@@ -39,7 +40,7 @@ class LoginWindow(QWidget):
         layout.addLayout(buttons_layout)
 
         self.setLayout(layout)
-        self.resize(300, 500)
+        self.resize(350, 500)
 
     # Metoda obsługująca przycisk "Zaloguj"
     def handle_login(self):
