@@ -21,11 +21,11 @@ class LoginWindow(QWidget):
         layout.addWidget(self.logo_label)
 
         # Dodanie pola loginu i hasła
-        self.username_input = QLineEdit()
-        self.username_input.setPlaceholderText("Login (wpisz: admin)")
-        layout.addWidget(self.username_input)
+        self.email_input = QLineEdit()
+        self.email_input.setPlaceholderText("E-mail (np. john.doe@example.com)")
+        layout.addWidget(self.email_input)
         self.password_input = QLineEdit()
-        self.password_input.setPlaceholderText("Hasło: (wpisz: nnn)")
+        self.password_input.setPlaceholderText("Hasło:")
         self.password_input.setEchoMode(QLineEdit.EchoMode.Password)
         layout.addWidget(self.password_input)
 
@@ -43,11 +43,11 @@ class LoginWindow(QWidget):
 
     # Metoda obsługująca przycisk "Zaloguj"
     def handle_login(self):
-        username = self.username_input.text()
+        email = self.email_input.text()
         password = self.password_input.text()
 
         # Wywołanie API
-        if self.api.login(username, password):
+        if self.api.login(email, password):
             self.login_successful.emit()
         else:
             QMessageBox.warning(self, "Błąd", "Nieprawidłowy login lub/i hasło!")

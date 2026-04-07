@@ -5,6 +5,7 @@ from api.client import APIClient
 from ui.main_window import MainWindow
 from ui.login_window import LoginWindow
 
+
 class ExpenseSplitterApp:
     def __init__(self):
         self.app = QApplication(sys.argv)
@@ -14,7 +15,7 @@ class ExpenseSplitterApp:
 
         # Tworzenie okien
         self.login_window = LoginWindow(self.api_client)
-        self.main = None # Tworzone dopiero po zalogowaniu
+        self.main = None  # Tworzone dopiero po zalogowaniu
 
         # Przełączenie okiem po zalogowaniu
         self.login_window.login_successful.connect(self.start_main_app)
@@ -27,6 +28,7 @@ class ExpenseSplitterApp:
         self.main_window = MainWindow(self.api_client)
         self.main_window.show()
         self.login_window.close()
+
 
 if __name__ == "__main__":
     # Tworzymy instancję zarządcy i odpalamy

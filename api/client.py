@@ -1,8 +1,6 @@
-from http.client import responses
-from os import access
-
 import requests
 from models.expense import Expense
+
 
 class APIClient:
 
@@ -11,28 +9,36 @@ class APIClient:
         self.base_url = base_url.rstrip('/')
         self.session = requests.Session()
         self.token = None
-        self.user_role = None # Admin czy user?
+        self.user_role = None  # Admin czy user?
 
     def login(self, username, password):
         url = f"{self.base_url}/auth/login"
+        headers = {
+            "X-API-Version": "1.0.0",
+            "Content-Type": "application/json"
+        }
         payload = {
-            "username": username,
+            "email": username,
             "password": password
         }
 
         try:
             # Wysłanie danych jako JSON
-            response = self.session.post(url, json=payload, timeout=5)
+            response = self.session.post(url, json=payload, headers=headers, timeout=5)
 
             if response.status_code == 200:
                 data = response.json()
-                self.token = data.get("token") or data.get("access_token")
+                self.token = data.get("accessToken")
                 self.user_role = data.get("role")
 
                 if self.token:
+                    self.session.headers.update({
+                        "Authorization": f"Bearer {self.token}"
+                    })
                     return True
             # Jeśli błąd:
             print(f"Logowanie nieudane. Kod statusu: {response.status_code}")
+            print(f"Odpowiedź serwera: {response.text}")
             return False
 
         except requests.exceptions.RequestException as e:
@@ -40,25 +46,27 @@ class APIClient:
             return False
 
     def get_expenses(self):
-        headers = {}
         if self.token:
-            headers["Authorization"] = f"Bearer {self.token}"
+            url = f"{self.base_url}/expenses"
 
-        response = requests.get(f"{self.base_url}/expenses", headers=headers)
-        data = response.json()
+        try:
+            response = self.session.get(url, timeout=5)
+            response.raise_for_status()
+            data = response.json()
+            expenses = []
 
-        expenses = []
+            for item in data:
+                expense = Expense(
+                    id=item["id"],
+                    title=item["title"],
+                    amount=item["amount"],
+                    payer_id=item["payer_id"],
+                    participants_id=item["participants_id"]
+                )
 
-        for item in data:
-            expense = Expense(
-                id=item["id"],
-                title=item["title"],
-                amount=item["amount"],
-                payer_id=item["payer_id"],
-                participants_id=item["participants_id"]
-            )
+                expenses.append(expense)
 
-            expenses.append(expense)
-
-        return expenses
-
+            return expenses
+        except requests.exceptions.RequestException as e:
+            print(f"Błąd pobierania wydathów: {e}")
+            return []
