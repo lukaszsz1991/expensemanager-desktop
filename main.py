@@ -1,5 +1,6 @@
 import sys
-from PyQt6.QtWidgets import QApplication
+from PyQt6.QtWidgets import QApplication, QDialog
+from PyQt6.QtCore import Qt
 
 from api.client import APIClient
 from ui.main_window import MainWindow
@@ -17,20 +18,13 @@ class ExpenseSplitterApp:
         self.login_window = LoginWindow(self.api_client)
         self.main_window = MainWindow(self.api_client)
 
-        # Przełączenie okiem po zalogowaniu
-        self.login_window.login_successful.connect(self.start_main_app)
-
     def run(self):
-        self.login_window.show()
-        self.main_window.show()
-        self.main_window.setEnabled(False)
-        return self.app.exec()
-
-    def start_main_app(self):
-        self.login_window.close()
-        self.main_window.setEnabled(True)
-        self.main_window.load_data()
-
+        if self.login_window.exec() == QDialog.DialogCode.Accepted:
+            self.main_window.show()
+            self.main_window.load_data()
+            return self.app.exec()
+        else:
+            return 0
 
 if __name__ == "__main__":
     # Tworzymy instancję zarządcy i odpalamy

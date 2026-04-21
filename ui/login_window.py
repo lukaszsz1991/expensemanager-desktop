@@ -1,9 +1,9 @@
 from PyQt6.QtGui import QPixmap
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLineEdit, QHBoxLayout, QPushButton, QLabel, QMessageBox
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLineEdit, QHBoxLayout, QPushButton, QLabel, QMessageBox, QDialog
 from PyQt6.QtCore import pyqtSignal as Signal, Qt
 
 
-class LoginWindow(QWidget):
+class LoginWindow(QDialog):
     login_successful = Signal()
 
     def __init__(self, api_client):
@@ -12,6 +12,10 @@ class LoginWindow(QWidget):
         self.setWindowTitle("Logowanie")
 
         layout = QVBoxLayout()
+
+        # Ustawienie modalności
+        self.setWindowModality(Qt.WindowModality.ApplicationModal)
+        self.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint)
 
         # Dodanie logo
         self.logo_label = QLabel()
@@ -49,7 +53,7 @@ class LoginWindow(QWidget):
 
         # Wywołanie API
         if self.api.login(email, password):
-            self.login_successful.emit()
+            self.accept()
         else:
             QMessageBox.warning(self, "Błąd", "Nieprawidłowy login lub/i hasło!")
             self.password_input.clear()

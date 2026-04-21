@@ -1,5 +1,6 @@
 import requests
 from models.expense import Expense
+from models.user import User
 
 
 class APIClient:
@@ -46,8 +47,10 @@ class APIClient:
             return False
 
     def get_expenses(self):
-        if self.token:
-            url = f"{self.base_url}/expenses"
+        if not self.token:
+            return []
+
+        url = f"{self.base_url}/expenses"
 
         try:
             response = self.session.get(url, timeout=5)
@@ -74,3 +77,33 @@ class APIClient:
         except requests.exceptions.RequestException as e:
             print(f"Błąd pobierania wydatków: {e}")
             return []
+
+    def get_users(self, query: str = "", page: int = 0, size: int = 20):
+        if not self.token:
+            return [], 0
+        url = f"{self.base_url}/users"
+        params = {
+            "query": query,
+            "page": page,
+            "size": size,
+        }
+
+        try:
+            response = self.session.get(url, params=params, timeout=5)
+            response.raise_for_status()
+            data = response.json()
+            users_list = data.get("content", [])
+            total_pages = data.get("page", {}).get("totalPages", 1)
+            users = [
+                User(
+                    id=item["id"],
+                    email=item["email"],
+                    first_name=item.get("firstName", ""),
+                    last_name=item.get("lastName", "")
+                )
+                for item in users_list
+            ]
+            return users, total_pages
+        except requests.exceptions.RequestException as e:
+            print(f"Błąd pobierania użytkownikiów: {e}")
+            return [], 0
