@@ -1,4 +1,4 @@
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QTableWidget, \
     QHeaderView, QMessageBox, QTableWidgetItem
 
@@ -23,25 +23,30 @@ class UsersWindow(QWidget):
         title = QLabel("Użytkownicy")
         title.setStyleSheet("font-size: 18px; font-weight: bold")
         top_layout.addWidget(title)
-        top_layout.addStretch()
+        main_window_btn = QPushButton("🏠 Ekran główny")
+        main_window_btn.setFixedWidth(240)
+        main_window_btn.clicked.connect(self.back_to_main_window)
+        top_layout.addWidget(main_window_btn)
+        layout.addLayout(top_layout)
 
+        search_layout = QHBoxLayout()
         self.search_input = QLineEdit()
         self.search_input.setPlaceholderText("Szukaj użytkownika...")
-        self.search_input.setFixedWidth(240)
         self.search_input.returnPressed.connect(self._on_search)
-        top_layout.addWidget(self.search_input)
+        search_layout.addWidget(self.search_input)
 
         search_btn = QPushButton("Szukaj")
-        top_layout.addWidget(search_btn)
+        search_btn.setFixedWidth(240)
+        search_layout.addWidget(search_btn)
         search_btn.clicked.connect(self._on_search)
-        layout.addLayout(top_layout)
+        layout.addLayout(search_layout)
 
         self.table = QTableWidget()
         self.table.setColumnCount(4)
         self.table.setHorizontalHeaderLabels(["ID", "E-mail", "Imię", "Nazwisko"])
         header = self.table.horizontalHeader()
-        header.setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
-        header.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
+        header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
+        header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
         header.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
         header.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
         self.table.verticalHeader().setVisible(False)
@@ -66,7 +71,7 @@ class UsersWindow(QWidget):
         layout.addLayout(pagination_layout)
 
         self.setLayout(layout)
-        self.load_users()
+        QTimer.singleShot(0, self.load_users)
 
     def load_users(self):
         query = self.search_input.text().strip()
@@ -111,3 +116,6 @@ class UsersWindow(QWidget):
         self.page_level.setText(f"Strona {self.current_page + 1} / {self.total_pages}")
         self.prev_btn.setEnabled(self.current_page > 0)
         self.next_btn.setEnabled((self.current_page < self.total_pages - 1))
+
+    def back_to_main_window(self):
+        pass

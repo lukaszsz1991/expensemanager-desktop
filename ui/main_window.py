@@ -89,3 +89,4 @@ class MainWindow(QMainWindow):
         self.users_window.show()
         self.users_window.raise_()
         self.users_window.activateWindow()
+        self.close()

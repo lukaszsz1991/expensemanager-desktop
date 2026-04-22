@@ -1,11 +1,11 @@
 import sys
 from PyQt6.QtWidgets import QApplication, QDialog
-from PyQt6.QtCore import Qt
 
 from api.client import APIClient
 from ui.main_window import MainWindow
 from ui.login_window import LoginWindow
 
+TEST = True
 
 class ExpenseSplitterApp:
     def __init__(self):
@@ -19,7 +19,11 @@ class ExpenseSplitterApp:
         self.main_window = MainWindow(self.api_client)
 
     def run(self):
-        if self.login_window.exec() == QDialog.DialogCode.Accepted:
+        if TEST:
+            self.main_window.show()
+            self.main_window.load_data()
+            return self.app.exec()
+        elif self.login_window.exec() == QDialog.DialogCode.Accepted:
             self.main_window.show()
             self.main_window.load_data()
             return self.app.exec()
