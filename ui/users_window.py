@@ -9,6 +9,7 @@ class UsersWindow(QWidget):
     def __init__(self, api_client: APIClient):
         super().__init__()
         self.api = api_client
+        self.main_window = None
         self.current_page = 0
         self.total_pages = 1
 
@@ -118,4 +119,9 @@ class UsersWindow(QWidget):
         self.next_btn.setEnabled((self.current_page < self.total_pages - 1))
 
     def back_to_main_window(self):
-        pass
+        from ui.main_window import MainWindow
+
+        self.main_window = MainWindow(self.api)
+        self.main_window.show()
+        self.main_window.load_data()
+        self.close()

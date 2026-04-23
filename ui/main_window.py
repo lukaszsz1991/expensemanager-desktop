@@ -79,9 +79,9 @@ class MainWindow(QMainWindow):
             balance_item.setForeground(QColor("green") if expense.my_balance > 0 else QColor("red"))
 
             self.table.setItem(row, 0, title_item)
-            self.table.setItem(row, 1, date_item)
-            self.table.setItem(row, 2, amount_item)
-            self.table.setItem(row, 3, balance_item)
+            self.table.setItem(row, 1, amount_item)
+            self.table.setItem(row, 2, balance_item)
+            self.table.setItem(row, 3, date_item)
 
     def open_users_window(self):
         if self.users_window is None or not self.users_window.isVisible():
