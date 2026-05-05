@@ -5,14 +5,14 @@ from api.client import APIClient
 from ui.main_window import MainWindow
 from ui.login_window import LoginWindow
 
-TEST = True
+TEST = False
 
 class ExpenseSplitterApp:
     def __init__(self):
         self.app = QApplication(sys.argv)
 
         # Inicjalizacja API
-        self.api_client = APIClient(base_url="http://localhost:8080/api")
+        self.api_client = APIClient(base_url="https://www.wydatkomat.tech/api")
 
         # Tworzenie okien
         self.login_window = LoginWindow(self.api_client)
