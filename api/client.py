@@ -107,3 +107,44 @@ class APIClient:
         except requests.exceptions.RequestException as e:
             print(f"Błąd pobierania użytkownikiów: {e}")
             return [], 0
+
+    def create_user(
+            self,
+            email: str,
+            role: str,
+            new_password: str,
+            repeat_new_password: str,
+            first_name: str = "",
+            last_name: str = "",
+    ) -> tuple[bool, str]:
+        if not self.token:
+            return False, "Brak autoryzacji."
+
+        url = f"{self.base_url}/admin/users"
+        headers = {"X-API-Version": "1.0.0"}
+        payload = {
+            "email": email,
+            "role": role,
+            "newPassword": new_password,
+            "repeatNewPassword": repeat_new_password,
+        }
+
+        if first_name:
+            payload["firstName"] = first_name
+        if last_name:
+            payload["lastName"] = last_name
+
+        try:
+            response = self.session.post(url, json=payload, headers=headers, timeout=5)
+            if response.status_code == 201:
+                return True, ""
+            try:
+                error_data = response.json()
+                msg = error_data.get("message") or error_data.get("error") or str(response.status_code)
+            except Exception:
+                msg = f"Kod HTTP: {response.status_code}"
+            print(f"Błąd tworzenia użytkownika: {response.status_code} - {response.text}")
+            return False, msg  # ← przeniesione poza wewnętrzny except
+        except requests.exceptions.RequestException as e:
+            print(f"Błąd połączenia przy tworzeniu użytkownika: {e}")
+            return False, str(e)

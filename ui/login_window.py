@@ -1,7 +1,7 @@
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLineEdit, QHBoxLayout, QPushButton, QLabel, QMessageBox, QDialog
 from PyQt6.QtCore import pyqtSignal as Signal, Qt
-
+from config import TEST
 
 class LoginWindow(QDialog):
     login_successful = Signal()
@@ -26,11 +26,17 @@ class LoginWindow(QDialog):
 
         # Dodanie pola loginu i hasła
         self.email_input = QLineEdit()
-        self.email_input.setPlaceholderText("E-mail (np. john.doe@example.com)")
+        if TEST:
+            self.email_input.setText("admin@example.com")
+        else:
+            self.email_input.setPlaceholderText("E-mail (np. john.doe@example.com)")
         layout.addWidget(self.email_input)
         self.password_input = QLineEdit()
         self.password_input.returnPressed.connect(self.handle_login)
-        self.password_input.setPlaceholderText("Hasło:")
+        if TEST:
+            self.password_input.setText("ES-Admin123#")
+        else:
+            self.password_input.setPlaceholderText("Hasło:")
         self.password_input.setEchoMode(QLineEdit.EchoMode.Password)
         layout.addWidget(self.password_input)
 
