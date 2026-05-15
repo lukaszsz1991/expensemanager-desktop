@@ -31,7 +31,7 @@ class MainWindow(QMainWindow):
         top_bar.addStretch()
         self.layout.addLayout(top_bar)
 
-        if TEST or self.api.user_role and "ADMIN" in self.api.user_role.upper():
+        if TEST or (self.api.user_role and "ADMIN" in self.api.user_role.upper()):
             add_user_btn = QPushButton("➕ Dodaj użytkownika")
             add_user_btn.clicked.connect(self.open_add_user_dialog)
             top_bar.addWidget(add_user_btn)
@@ -90,7 +90,7 @@ class MainWindow(QMainWindow):
 
     def open_users_window(self):
         if self.users_window is None or not self.users_window.isVisible():
-            self.users_window = UsersWindow(self.api)
+            self.users_window = UsersWindow(self.api, main_window=self)
         self.users_window.show()
         self.users_window.raise_()
         self.users_window.activateWindow()

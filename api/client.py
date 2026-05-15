@@ -6,11 +6,10 @@ from models.user import User
 class APIClient:
 
     def __init__(self, base_url):
-        # Bazowy URL
         self.base_url = base_url.rstrip('/')
         self.session = requests.Session()
         self.token = None
-        self.user_role = None  # Admin czy user?
+        self.user_role = None
 
     def login(self, username, password):
         url = f"{self.base_url}/auth/login"
@@ -24,7 +23,6 @@ class APIClient:
         }
 
         try:
-            # Wysłanie danych jako JSON
             response = self.session.post(url, json=payload, headers=headers, timeout=5)
 
             if response.status_code == 200:
@@ -37,13 +35,13 @@ class APIClient:
                         "Authorization": f"Bearer {self.token}"
                     })
                     return True
-            # Jeśli błąd:
+
             print(f"Logowanie nieudane. Kod statusu: {response.status_code}")
             print(f"Odpowiedź serwera: {response.text}")
             return False
 
         except requests.exceptions.RequestException as e:
-            print(f"Błąd połączenie: {e}")
+            print(f"Błąd połączenia: {e}")
             return False
 
     def get_expenses(self):
@@ -56,11 +54,9 @@ class APIClient:
             response = self.session.get(url, timeout=5)
             response.raise_for_status()
             data = response.json()
-            print("RESPONSE DATA:", data)
             expenses_list = data.get("content", [])
 
             expenses = []
-
             for item in expenses_list:
                 expense = Expense(
                     id=item["id"],
@@ -69,8 +65,6 @@ class APIClient:
                     my_balance=item["myBalance"],
                     expense_date=item["expenseDate"]
                 )
-                print(expense)
-
                 expenses.append(expense)
 
             return expenses
@@ -81,15 +75,17 @@ class APIClient:
     def get_users(self, query: str = "", page: int = 0, size: int = 20):
         if not self.token:
             return [], 0
-        url = f"{self.base_url}/users"
+
+        url = f"{self.base_url}/admin/users"
         params = {
             "query": query,
             "page": page,
             "size": size,
         }
+        headers = {"X-API-Version": "1.0.0"}
 
         try:
-            response = self.session.get(url, params=params, timeout=5)
+            response = self.session.get(url, params=params, headers=headers, timeout=5)
             response.raise_for_status()
             data = response.json()
             users_list = data.get("content", [])
@@ -98,15 +94,30 @@ class APIClient:
                 User(
                     id=item["id"],
                     email=item["email"],
-                    first_name=item.get("firstName", ""),
-                    last_name=item.get("lastName", "")
+                    role=item.get("role", ""),
+                    created_at=item.get("createdAt", "")
                 )
                 for item in users_list
             ]
             return users, total_pages
         except requests.exceptions.RequestException as e:
-            print(f"Błąd pobierania użytkownikiów: {e}")
+            print(f"Błąd pobierania użytkowników: {e}")
             return [], 0
+
+    def get_user_details(self, user_id: str) -> tuple[dict, str]:
+        if not self.token:
+            return {}, "Brak autoryzacji."
+
+        url = f"{self.base_url}/admin/users/{user_id}"
+        headers = {"X-API-Version": "1.0.0"}
+
+        try:
+            response = self.session.get(url, headers=headers, timeout=5)
+            response.raise_for_status()
+            return response.json(), ""
+        except requests.exceptions.RequestException as e:
+            print(f"Błąd pobierania szczegółów użytkownika {user_id}: {e}")
+            return {}, str(e)
 
     def create_user(
             self,
@@ -140,11 +151,90 @@ class APIClient:
                 return True, ""
             try:
                 error_data = response.json()
-                msg = error_data.get("message") or error_data.get("error") or str(response.status_code)
+                msg = error_data.get("message") or error_data.get("detail") or str(response.status_code)
             except Exception:
                 msg = f"Kod HTTP: {response.status_code}"
             print(f"Błąd tworzenia użytkownika: {response.status_code} - {response.text}")
-            return False, msg  # ← przeniesione poza wewnętrzny except
+            return False, msg
         except requests.exceptions.RequestException as e:
             print(f"Błąd połączenia przy tworzeniu użytkownika: {e}")
+            return False, str(e)
+
+    def reset_user_password(self, user_id: str) -> tuple[bool, str]:
+        """
+        Wysyła żądanie resetu hasła dla użytkownika.
+        Użytkownik otrzyma e-mail z instrukcjami.
+        """
+        if not self.token:
+            return False, "Brak autoryzacji."
+
+        url = f"{self.base_url}/admin/users/{user_id}/reset-password"
+        headers = {"X-API-Version": "1.0.0"}
+
+        try:
+            response = self.session.post(url, headers=headers, timeout=5)
+            if response.status_code == 200:
+                return True, ""
+            try:
+                error_data = response.json()
+                msg = error_data.get("message") or error_data.get("detail") or str(response.status_code)
+            except Exception:
+                msg = f"Kod HTTP: {response.status_code}"
+            print(f"Błąd resetu hasła: {response.status_code} - {response.text}")
+            return False, msg
+        except requests.exceptions.RequestException as e:
+            print(f"Błąd połączenia przy resecie hasła: {e}")
+            return False, str(e)
+
+    def update_user(self, user_id: str, email: str, role: str, first_name: str = "", last_name: str = "") -> tuple[
+        bool, str]:
+        if not self.token:
+            return False, "Brak autoryzacji."
+
+        url = f"{self.base_url}/admin/users/{user_id}"
+        headers = {"X-API-Version": "1.0.0"}
+        payload = {
+            "email": email,
+            "role": role,
+        }
+        if first_name:
+            payload["firstName"] = first_name
+        if last_name:
+            payload["lastName"] = last_name
+
+        try:
+            response = self.session.patch(url, json=payload, headers=headers, timeout=5)
+            if response.status_code == 200:
+                return True, ""
+            try:
+                error_data = response.json()
+                msg = error_data.get("message") or error_data.get("detail") or str(response.status_code)
+            except Exception:
+                msg = f"Kod HTTP: {response.status_code}"
+            print(f"Błąd aktualizacji użytkownika: {response.status_code} - {response.text}")
+            return False, msg
+        except requests.exceptions.RequestException as e:
+            print(f"Błąd połączenia przy aktualizacji użytkownika: {e}")
+            return False, str(e)
+
+    def delete_user(self, user_id: str) -> tuple[bool, str]:
+        if not self.token:
+            return False, "Brak autoryzacji."
+
+        url = f"{self.base_url}/admin/users/{user_id}"
+        headers = {"X-API-Version": "1.0.0"}
+
+        try:
+            response = self.session.delete(url, headers=headers, timeout=5)
+            if response.status_code == 204:
+                return True, ""
+            try:
+                error_data = response.json()
+                msg = error_data.get("message") or error_data.get("detail") or str(response.status_code)
+            except Exception:
+                msg = f"Kod HTTP: {response.status_code}"
+            print(f"Błąd usuwania użytkownika: {response.status_code} - {response.text}")
+            return False, msg
+        except requests.exceptions.RequestException as e:
+            print(f"Błąd połączenia przy usuwaniu użytkownika: {e}")
             return False, str(e)

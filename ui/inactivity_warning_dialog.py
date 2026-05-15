@@ -1,10 +1,7 @@
 # ui/inactivity_warning_dialog.py
 from PyQt6.QtCore import QTimer, Qt
 from PyQt6.QtWidgets import QDialog, QVBoxLayout, QLabel, QPushButton, QHBoxLayout
-
-
-COUNTDOWN_SECONDS = 30
-
+from config import SECONDS_TO_WARNING
 
 class InactivityWarningDialog(QDialog):
     """
@@ -19,7 +16,7 @@ class InactivityWarningDialog(QDialog):
         self.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint)
         self.setFixedSize(360, 160)
 
-        self._seconds_left = COUNTDOWN_SECONDS
+        self._seconds_left = SECONDS_TO_WARNING
 
         layout = QVBoxLayout()
         layout.setContentsMargins(24, 20, 24, 20)
@@ -55,7 +52,7 @@ class InactivityWarningDialog(QDialog):
         self._update_labels()
 
     def start_countdown(self):
-        self._seconds_left = COUNTDOWN_SECONDS
+        self._seconds_left = SECONDS_TO_WARNING
         self._update_labels()
         self._tick_timer.start()
 

@@ -1,15 +1,18 @@
 from PyQt6.QtCore import Qt, QTimer
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit, QPushButton, QTableWidget, \
-    QHeaderView, QMessageBox, QTableWidgetItem
+from PyQt6.QtWidgets import (
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
+    QPushButton, QTableWidget, QHeaderView, QMessageBox, QTableWidgetItem
+)
 
 from api.client import APIClient
+from ui import main_window
 
 
 class UsersWindow(QWidget):
-    def __init__(self, api_client: APIClient):
+    def __init__(self, api_client: APIClient, main_window=None):
         super().__init__()
         self.api = api_client
-        self.main_window = None
+        self.main_window = main_window
         self.current_page = 0
         self.total_pages = 1
 
@@ -38,18 +41,23 @@ class UsersWindow(QWidget):
 
         search_btn = QPushButton("Szukaj")
         search_btn.setFixedWidth(240)
-        search_layout.addWidget(search_btn)
         search_btn.clicked.connect(self._on_search)
+        search_layout.addWidget(search_btn)
         layout.addLayout(search_layout)
 
         self.table = QTableWidget()
         self.table.setColumnCount(4)
-        self.table.setHorizontalHeaderLabels(["ID", "E-mail", "Imię", "Nazwisko"])
+        self.table.setHorizontalHeaderLabels(["ID", "E-mail", "Rola", "Data utworzenia"])
         header = self.table.horizontalHeader()
-        header.setSectionResizeMode(0, QHeaderView.ResizeMode.ResizeToContents)
-        header.setSectionResizeMode(1, QHeaderView.ResizeMode.Stretch)
-        header.setSectionResizeMode(2, QHeaderView.ResizeMode.ResizeToContents)
-        header.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
+        header.setSectionResizeMode(0, QHeaderView.ResizeMode.Interactive)
+        header.setSectionResizeMode(1, QHeaderView.ResizeMode.Interactive)
+        header.setSectionResizeMode(2, QHeaderView.ResizeMode.Interactive)
+        header.setSectionResizeMode(3, QHeaderView.ResizeMode.Interactive)
+        header.setStretchLastSection(True)
+        header.resizeSection(0, 300)
+        header.resizeSection(1, 340)
+        header.resizeSection(2, 80)
+        header.resizeSection(3, 160)
         self.table.verticalHeader().setVisible(False)
         self.table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self.table.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
@@ -74,6 +82,8 @@ class UsersWindow(QWidget):
         self.setLayout(layout)
         QTimer.singleShot(0, self.load_users)
 
+        self.table.cellDoubleClicked.connect(self._on_row_double_clicked)
+
     def load_users(self):
         query = self.search_input.text().strip()
         users, total_pages = self.api.get_users(
@@ -94,10 +104,17 @@ class UsersWindow(QWidget):
             id_item = QTableWidgetItem(str(user.id))
             id_item.setForeground(Qt.GlobalColor.gray)
             self.table.setItem(row, 0, id_item)
-            self.table.setItem(row, 1, QTableWidgetItem(user.email))
-            self.table.setItem(row, 2, QTableWidgetItem(user.first_name))
-            self.table.setItem(row, 3, QTableWidgetItem(user.last_name))
 
+            self.table.setItem(row, 1, QTableWidgetItem(user.email))
+
+            role_item = QTableWidgetItem(user.role)
+            role_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+            self.table.setItem(row, 2, role_item)
+
+            date = user.created_at.split("T")[0] if user.created_at else ""
+            date_item = QTableWidgetItem(date)
+            date_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+            self.table.setItem(row, 3, date_item)
 
     def _on_search(self):
         self.current_page = 0
@@ -116,12 +133,18 @@ class UsersWindow(QWidget):
     def _update_pagination(self):
         self.page_level.setText(f"Strona {self.current_page + 1} / {self.total_pages}")
         self.prev_btn.setEnabled(self.current_page > 0)
-        self.next_btn.setEnabled((self.current_page < self.total_pages - 1))
+        self.next_btn.setEnabled(self.current_page < self.total_pages - 1)
 
     def back_to_main_window(self):
-        from ui.main_window import MainWindow
-
-        self.main_window = MainWindow(self.api)
-        self.main_window.show()
-        self.main_window.load_data()
+        if self.main_window:
+            self.main_window.show()
+            self.main_window.load_data()
         self.close()
+
+    def _on_row_double_clicked(self, row: int, column: int):
+        id_item = self.table.item(row, 0)
+        if id_item:
+            from ui.user_details_dialog import UserDetailsDialog
+            dialog = UserDetailsDialog(self.api, id_item.text(), parent=self)
+            dialog.user_changed.connect(self.load_users)
+            dialog.exec()
