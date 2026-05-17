@@ -1,5 +1,5 @@
 # ui/main_window.py
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QColor
 from PyQt6.QtWidgets import QMainWindow, QLabel, QVBoxLayout, QWidget, QTableWidget, QTableWidgetItem, QHeaderView, \
     QHBoxLayout, QPushButton
@@ -7,10 +7,10 @@ from PyQt6.QtWidgets import QMainWindow, QLabel, QVBoxLayout, QWidget, QTableWid
 from api.client import APIClient
 from ui.users_window import UsersWindow
 from ui.add_user_dialog import AddUserDialog
-from config import TEST
 
 
 class MainWindow(QMainWindow):
+    logout_requested = pyqtSignal()
     def __init__(self, api_client: APIClient):
         super().__init__()
         self.api = api_client
@@ -31,14 +31,9 @@ class MainWindow(QMainWindow):
         top_bar.addStretch()
         self.layout.addLayout(top_bar)
 
-        if TEST or (self.api.user_role and "ADMIN" in self.api.user_role.upper()):
-            add_user_btn = QPushButton("➕ Dodaj użytkownika")
-            add_user_btn.clicked.connect(self.open_add_user_dialog)
-            top_bar.addWidget(add_user_btn)
-
-            users_btn = QPushButton("👥 Użytkownicy")
-            users_btn.clicked.connect(self.open_users_window)
-            top_bar.addWidget(users_btn)
+        logout_btn = QPushButton("🚪 Wyloguj")
+        logout_btn.clicked.connect(self.logout_requested)
+        top_bar.addWidget(logout_btn)
 
         self.table = QTableWidget()
         self.table.setColumnCount(4)
@@ -84,13 +79,10 @@ class MainWindow(QMainWindow):
             self.table.setItem(row, 2, balance_item)
             self.table.setItem(row, 3, date_item)
 
-    def open_add_user_dialog(self):
-        dialog = AddUserDialog(self.api, parent=self)
-        dialog.exec()
-
     def open_users_window(self):
         if self.users_window is None or not self.users_window.isVisible():
             self.users_window = UsersWindow(self.api, main_window=self)
+            self.users_window.logout_requested.connect(self.logout_requested)
         self.users_window.show()
         self.users_window.raise_()
         self.users_window.activateWindow()

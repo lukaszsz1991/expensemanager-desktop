@@ -1,7 +1,8 @@
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLineEdit, QHBoxLayout, QPushButton, QLabel, QMessageBox, QDialog
 from PyQt6.QtCore import pyqtSignal as Signal, Qt
-from config import TEST
+from config import TEST, TEST_ROLE, USER_LOGIN, USER_PASSWORD, ADMIN_LOGIN, ADMIN_PASSWORD
+
 
 class LoginWindow(QDialog):
     login_successful = Signal()
@@ -13,28 +14,31 @@ class LoginWindow(QDialog):
 
         layout = QVBoxLayout()
 
-        # Ustawienie modalności
         self.setWindowModality(Qt.WindowModality.ApplicationModal)
         self.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint)
 
-        # Dodanie logo
         self.logo_label = QLabel()
         pixmap = QPixmap("ui/logo.png")
         self.logo_label.setPixmap(pixmap.scaled(150, 150))
         self.logo_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(self.logo_label)
 
-        # Dodanie pola loginu i hasła
         self.email_input = QLineEdit()
         if TEST:
-            self.email_input.setText("admin@example.com")
+            if TEST_ROLE == "USER":
+                self.email_input.setText(USER_LOGIN)
+            else:
+                self.email_input.setText(ADMIN_LOGIN)
         else:
             self.email_input.setPlaceholderText("E-mail (np. john.doe@example.com)")
         layout.addWidget(self.email_input)
         self.password_input = QLineEdit()
         self.password_input.returnPressed.connect(self.handle_login)
         if TEST:
-            self.password_input.setText("ES-Admin123#")
+            if TEST_ROLE == "USER":
+                self.password_input.setText(USER_PASSWORD)
+            else:
+                self.password_input.setText(ADMIN_PASSWORD)
         else:
             self.password_input.setPlaceholderText("Hasło:")
         self.password_input.setEchoMode(QLineEdit.EchoMode.Password)

@@ -29,7 +29,7 @@ class AddUserDialog(QDialog):
 
         self.setWindowTitle("Dodaj nowego użytkownika")
         self.setWindowModality(Qt.WindowModality.ApplicationModal)
-        self.setFixedSize(400, 380)
+        self.setFixedSize(430, 420)
 
         main_layout = QVBoxLayout()
         main_layout.setContentsMargins(24, 20, 24, 20)

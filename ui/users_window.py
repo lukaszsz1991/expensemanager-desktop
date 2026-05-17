@@ -1,18 +1,18 @@
-from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtCore import Qt, QTimer, pyqtSignal
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
     QPushButton, QTableWidget, QHeaderView, QMessageBox, QTableWidgetItem
 )
 
 from api.client import APIClient
-from ui import main_window
+from ui.add_user_dialog import AddUserDialog
 
 
 class UsersWindow(QWidget):
-    def __init__(self, api_client: APIClient, main_window=None):
+    logout_requested = pyqtSignal()
+    def __init__(self, api_client: APIClient):
         super().__init__()
         self.api = api_client
-        self.main_window = main_window
         self.current_page = 0
         self.total_pages = 1
 
@@ -27,10 +27,14 @@ class UsersWindow(QWidget):
         title = QLabel("Użytkownicy")
         title.setStyleSheet("font-size: 18px; font-weight: bold")
         top_layout.addWidget(title)
-        main_window_btn = QPushButton("🏠 Ekran główny")
-        main_window_btn.setFixedWidth(240)
-        main_window_btn.clicked.connect(self.back_to_main_window)
-        top_layout.addWidget(main_window_btn)
+
+        add_user_btn = QPushButton("➕ Dodaj użytkownika")
+        add_user_btn.clicked.connect(self.open_add_user_dialog)
+        top_layout.addWidget(add_user_btn)
+
+        logout_btn = QPushButton("🚪 Wyloguj")
+        logout_btn.clicked.connect(self.logout_requested)
+        top_layout.addWidget(logout_btn)
         layout.addLayout(top_layout)
 
         search_layout = QHBoxLayout()
@@ -135,12 +139,6 @@ class UsersWindow(QWidget):
         self.prev_btn.setEnabled(self.current_page > 0)
         self.next_btn.setEnabled(self.current_page < self.total_pages - 1)
 
-    def back_to_main_window(self):
-        if self.main_window:
-            self.main_window.show()
-            self.main_window.load_data()
-        self.close()
-
     def _on_row_double_clicked(self, row: int, column: int):
         id_item = self.table.item(row, 0)
         if id_item:
@@ -148,3 +146,7 @@ class UsersWindow(QWidget):
             dialog = UserDetailsDialog(self.api, id_item.text(), parent=self)
             dialog.user_changed.connect(self.load_users)
             dialog.exec()
+
+    def open_add_user_dialog(self):
+        dialog = AddUserDialog(self.api, parent=self)
+        dialog.exec()

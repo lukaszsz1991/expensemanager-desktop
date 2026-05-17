@@ -2,17 +2,20 @@ import sys
 from PyQt6.QtWidgets import QApplication, QDialog
 
 from api.client import APIClient
+from config import API_BASE_URL
 from ui.main_window import MainWindow
 from ui.login_window import LoginWindow
 from ui.inactivity_manager import InactivityManager
 from ui.inactivity_warning_dialog import InactivityWarningDialog
+from ui.users_window import UsersWindow
+
 
 class ExpenseSplitterApp:
     def __init__(self):
         self.app = QApplication(sys.argv)
 
         # Inicjalizacja API
-        self.api_client = APIClient(base_url="https://www.wydatkomat.tech/api")
+        self.api_client = APIClient(base_url=API_BASE_URL)
 
         # Tworzenie okien
         self.login_window = LoginWindow(self.api_client)
@@ -31,13 +34,17 @@ class ExpenseSplitterApp:
             return 0
 
     def _open_main_window(self):
-        self.main_window = MainWindow(self.api_client)
+        if self.api_client.user_role and "ADMIN" in self.api_client.user_role.upper():
+            self.main_window = UsersWindow(self.api_client)
+        else:
+            self.main_window = MainWindow(self.api_client)
+        self.main_window.logout_requested.connect(self._on_auto_logout)
         self.main_window.show()
-        self.main_window.load_data()
+        if hasattr(self.main_window, 'load_data'):
+            self.main_window.load_data()
         self.inactivity_manager.start()
 
     def _on_inactivity_warning(self):
-        """Pokazuje okno ostrzegawcze z odliczaniem."""
         dialog = InactivityWarningDialog(self.main_window)
         dialog.start_countdown()
         result = dialog.exec()
@@ -50,7 +57,6 @@ class ExpenseSplitterApp:
             self._on_auto_logout()
 
     def _on_auto_logout(self):
-        """Wylogowuje użytkownika i wraca do ekranu logowania."""
         self.inactivity_manager.stop()
         self.api_client.token = None
         self.api_client.user_role = None
@@ -59,12 +65,12 @@ class ExpenseSplitterApp:
             self.main_window.close()
             self.main_window = None
 
-        # Nowe okno logowania
         self.login_window = LoginWindow(self.api_client)
         if self.login_window.exec() == QDialog.DialogCode.Accepted:
             self._open_main_window()
         else:
             self.app.quit()
+
 
 
 if __name__ == "__main__":

@@ -1,4 +1,4 @@
-import requests
+import requests, base64, json
 from models.expense import Expense
 from models.user import User
 
@@ -27,13 +27,15 @@ class APIClient:
 
             if response.status_code == 200:
                 data = response.json()
+                print(f"Login response: {data}")  # ← dodaj tę linię
                 self.token = data.get("accessToken")
-                self.user_role = data.get("role")
+                self.user_role = self._decode_role_from_token(self.token)
 
                 if self.token:
                     self.session.headers.update({
                         "Authorization": f"Bearer {self.token}"
                     })
+                    print(f"Ustawiam user_role: {self.user_role}")
                     return True
 
             print(f"Logowanie nieudane. Kod statusu: {response.status_code}")
@@ -186,6 +188,32 @@ class APIClient:
             print(f"Błąd połączenia przy resecie hasła: {e}")
             return False, str(e)
 
+    def change_user_password(self, user_id: str, new_password: str, repeat_new_password: str) -> tuple[bool, str]:
+        if not self.token:
+            return False, "Brak autoryzacji."
+
+        url = f"{self.base_url}/admin/users/{user_id}/password"
+        headers = {"X-API-Version": "1.0.0"}
+        payload = {
+            "newPassword": new_password,
+            "repeatNewPassword": repeat_new_password,
+        }
+
+        try:
+            response = self.session.patch(url, json=payload, headers=headers, timeout=5)
+            if response.status_code == 200:
+                return True, ""
+            try:
+                error_data = response.json()
+                msg = error_data.get("message") or error_data.get("detail") or str(response.status_code)
+            except Exception:
+                msg = f"Kod HTTP: {response.status_code}"
+            print(f"Błąd zmiany hasła: {response.status_code} - {response.text}")
+            return False, msg
+        except requests.exceptions.RequestException as e:
+            print(f"Błąd połączenia przy zmianie hasła: {e}")
+            return False, str(e)
+
     def update_user(self, user_id: str, email: str, role: str, first_name: str = "", last_name: str = "") -> tuple[
         bool, str]:
         if not self.token:
@@ -238,3 +266,17 @@ class APIClient:
         except requests.exceptions.RequestException as e:
             print(f"Błąd połączenia przy usuwaniu użytkownika: {e}")
             return False, str(e)
+
+    def _decode_role_from_token(self, token: str) -> str | None:
+        try:
+            payload = token.split(".")[1]
+            # base64 wymaga dopełnienia do wielokrotności 4
+            payload += "=" * (4 - len(payload) % 4)
+            data = json.loads(base64.b64decode(payload))
+            roles = data.get("roles", [])
+            return roles[0] if roles else None
+        except Exception as e:
+            print(f"Błąd dekodowania tokenu: {e}")
+            return None
+
+

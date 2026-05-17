@@ -37,13 +37,11 @@ class UserDetailsDialog(QDialog):
         form.setSpacing(10)
         form.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
 
-        # Tylko do odczytu
         self._id_label = QLabel()
         self._id_label.setStyleSheet("color: gray; font-size: 11px;")
         self._id_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         form.addRow("ID:", self._id_label)
 
-        # Edytowalne
         self._email_input = QLineEdit()
         form.addRow("E-mail:", self._email_input)
 
@@ -70,10 +68,20 @@ class UserDetailsDialog(QDialog):
         self._updated_label = QLabel()
         form.addRow("Zaktualizowano:", self._updated_label)
 
+        deleted_layout = QHBoxLayout()
         self._deleted_label = QLabel()
+
+        deleted_layout.addWidget(self._deleted_label)
+
+        self._delete_btn = QPushButton("🗑 Usuń użytkownika")
+        self._delete_btn.setStyleSheet("color: #c0392b;")
+        self._delete_btn.clicked.connect(self._handle_delete)
+        deleted_layout.addWidget(self._delete_btn)
+        deleted_layout.addStretch()
         form.addRow("Usunięto:", self._deleted_label)
 
         main_layout.addLayout(form)
+        main_layout.addLayout(deleted_layout)
         main_layout.addStretch()
 
         line2 = QFrame()
@@ -86,12 +94,12 @@ class UserDetailsDialog(QDialog):
         reset_btn = QPushButton("🔑 Resetuj hasło")
         reset_btn.clicked.connect(self._handle_reset_password)
         buttons.addWidget(reset_btn)
-        buttons.addStretch()
 
-        delete_btn = QPushButton("🗑 Usuń użytkownika")
-        delete_btn.setStyleSheet("color: #c0392b;")
-        delete_btn.clicked.connect(self._handle_delete)
-        buttons.addWidget(delete_btn)
+        change_pwd_btn = QPushButton("🔒 Zmień hasło")
+        change_pwd_btn.clicked.connect(self._handle_change_password)
+        buttons.addWidget(change_pwd_btn)
+
+        buttons.addStretch()
 
         self._save_btn = QPushButton("💾 Zapisz zmiany")
         self._save_btn.setStyleSheet("font-weight: bold;")
@@ -171,13 +179,7 @@ class UserDetailsDialog(QDialog):
         self._save_btn.setText("💾 Zapisz zmiany")
 
     def _handle_reset_password(self):
-        reply = QMessageBox.question(
-            self,
-            "Potwierdzenie",
-            f"Czy na pewno chcesz wysłać reset hasła dla:\n{self._email_input.text()}?",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
-        )
-        if reply != QMessageBox.StandardButton.Yes:
+        if not self._confirm(f"Czy na pewno chcesz wysłać reset hasła dla:\n{self._email_input.text()}?"):
             return
 
         success, error_msg = self.api.reset_user_password(self._user_id)
@@ -185,16 +187,6 @@ class UserDetailsDialog(QDialog):
             QMessageBox.information(self, "Sukces", "E-mail z resetem hasła został wysłany.")
         else:
             QMessageBox.critical(self, "Błąd", f"Nie udało się wysłać resetu hasła.\n{error_msg}")
-
-    @staticmethod
-    def _fmt_date(value: str | None) -> str:
-        if not value:
-            return "—"
-        try:
-            date, time = value.split("T")
-            return f"{date} {time[:5]}"
-        except Exception:
-            return value
 
     def _handle_delete(self):
         if not self._confirm(
@@ -218,3 +210,23 @@ class UserDetailsDialog(QDialog):
         msg.addButton("Nie", QMessageBox.ButtonRole.NoRole)
         msg.exec()
         return msg.clickedButton() == tak_btn
+
+    @staticmethod
+    def _fmt_date(value: str | None) -> str:
+        if not value:
+            return "—"
+        try:
+            date, time = value.split("T")
+            return f"{date} {time[:5]}"
+        except Exception:
+            return value
+
+    def _handle_change_password(self):
+        from ui.change_password_dialog import ChangePasswordDialog
+        dialog = ChangePasswordDialog(
+            self.api,
+            self._user_id,
+            self._email_input.text(),
+            parent=self
+        )
+        dialog.exec()
