@@ -1,7 +1,9 @@
+import sys
+import os
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLineEdit, QHBoxLayout, QPushButton, QLabel, QMessageBox, QDialog
 from PyQt6.QtCore import pyqtSignal as Signal, Qt
-from config import TEST, TEST_ROLE, USER_LOGIN, USER_PASSWORD, ADMIN_LOGIN, ADMIN_PASSWORD
+from config import TEST, TEST_ROLE, USER_LOGIN, USER_PASSWORD, ADMIN_LOGIN, ADMIN_PASSWORD, resource_path
 
 
 class LoginWindow(QDialog):
@@ -18,7 +20,7 @@ class LoginWindow(QDialog):
         self.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint)
 
         self.logo_label = QLabel()
-        pixmap = QPixmap("ui/logo.png")
+        pixmap = QPixmap(resource_path("ui/logo.png"))
         self.logo_label.setPixmap(pixmap.scaled(150, 150))
         self.logo_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(self.logo_label)
