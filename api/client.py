@@ -56,6 +56,8 @@ class APIClient:
             response = self.session.get(url, timeout=5)
             response.raise_for_status()
             data = response.json()
+            # w get_expenses, po data = response.json()
+            print("EXPENSES RESPONSE:", data)
             expenses_list = data.get("content", [])
 
             expenses = []
@@ -63,9 +65,11 @@ class APIClient:
                 expense = Expense(
                     id=item["id"],
                     title=item["title"],
-                    amount_total=item["amountTotal"],
-                    my_balance=item["myBalance"],
-                    expense_date=item["expenseDate"]
+                    amount_total=item.get("amountTotal", 0.0),
+                    expense_date=item["expenseDate"],
+                    role=item.get("role", ""),
+                    my_balance=item.get("myBalance", 0.0)
+
                 )
                 expenses.append(expense)
 
@@ -278,5 +282,30 @@ class APIClient:
         except Exception as e:
             print(f"Błąd dekodowania tokenu: {e}")
             return None
+
+    def logout(self):
+        self.token = None
+        self.user_role = None
+        self.session.headers.pop("Authorization", None)
+
+    def request_password_reset(self, email: str) -> tuple[bool, str]:
+        url = f"{self.base_url}/auth/reset-password"
+        headers = {"X-API-Version": "1.0.0"}
+        payload = {"email": email}
+
+        try:
+            response = self.session.post(url, json=payload, headers=headers, timeout=5)
+            if response.status_code == 204:
+                return True, ""
+            try:
+                error_data = response.json()
+                msg = error_data.get("message") or error_data.get("detail") or str(response.status_code)
+            except Exception:
+                msg = f"Kod HTTP: {response.status_code}"
+            print(f"Błąd resetu hasła: {response.status_code} - {response.text}")
+            return False, msg
+        except requests.exceptions.RequestException as e:
+            print(f"Błąd połączenia przy resecie hasła: {e}")
+            return False, str(e)
 
 

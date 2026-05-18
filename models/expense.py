@@ -7,5 +7,6 @@ class Expense:
     id: str
     title: str
     amount_total: float
-    my_balance: float
     expense_date: str
+    my_balance: float = 0.0
+    role: str = ""

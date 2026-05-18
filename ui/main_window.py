@@ -5,6 +5,7 @@ from PyQt6.QtWidgets import QMainWindow, QLabel, QVBoxLayout, QWidget, QTableWid
     QHBoxLayout, QPushButton
 
 from api.client import APIClient
+from models.expense import Expense
 from ui.users_window import UsersWindow
 from ui.add_user_dialog import AddUserDialog
 
@@ -37,7 +38,7 @@ class MainWindow(QMainWindow):
 
         self.table = QTableWidget()
         self.table.setColumnCount(4)
-        self.table.setHorizontalHeaderLabels(["Tytuł", "Kwota", "Mój bilans", "Data"])
+        self.table.setHorizontalHeaderLabels(["Tytuł", "Kwota", "Rola", "Data"])
         header = self.table.horizontalHeader()
         header.setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
         header.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
@@ -68,15 +69,16 @@ class MainWindow(QMainWindow):
             amount_item = QTableWidgetItem(f"{expense.amount_total:.2f} PLN")
             amount_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
 
-            balance_text = f"+{expense.my_balance:.2f} PLN" if expense.my_balance > 0 else f"{expense.my_balance:.2f} PLN"
-            balance_item = QTableWidgetItem(balance_text)
-            balance_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
-
-            balance_item.setForeground(QColor("green") if expense.my_balance > 0 else QColor("red"))
+            role_item = QTableWidgetItem(expense.role)
+            role_item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+            if expense.role == "PAYER":
+                role_item.setForeground(QColor("green"))
+            elif expense.role == "PARTICIPANT":
+                role_item.setForeground(QColor("red"))
 
             self.table.setItem(row, 0, title_item)
             self.table.setItem(row, 1, amount_item)
-            self.table.setItem(row, 2, balance_item)
+            self.table.setItem(row, 2, role_item)
             self.table.setItem(row, 3, date_item)
 
     def open_users_window(self):

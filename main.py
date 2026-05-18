@@ -58,8 +58,7 @@ class ExpenseSplitterApp:
 
     def _on_auto_logout(self):
         self.inactivity_manager.stop()
-        self.api_client.token = None
-        self.api_client.user_role = None
+        self.api_client.logout()
 
         if self.main_window:
             self.main_window.close()
