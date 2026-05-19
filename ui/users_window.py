@@ -5,6 +5,7 @@ from PyQt6.QtWidgets import (
 )
 
 from api.client import APIClient
+from config import USERS_PER_SITE
 from ui.add_user_dialog import AddUserDialog
 
 
@@ -93,7 +94,7 @@ class UsersWindow(QWidget):
         users, total_pages = self.api.get_users(
             query=query,
             page=self.current_page,
-            size=20
+            size=USERS_PER_SITE
         )
         self.total_pages = max(total_pages, 1)
         self._update_pagination()
